@@ -4,7 +4,7 @@ import { Octokit } from '@octokit/rest'
 import { createAppAuth } from '@octokit/auth-app'
 
 async function run() {
-  core.info('Starting GitEvents Propaganda...')
+  core.info('Starting GitEvents Broadcast...')
   const appId = core.getInput('gitevents-app-id')
   const appPrivateKey = core.getInput('gitevents-app-private-key')
   const appInstallationId = core.getInput('gitevents-app-installation-id')

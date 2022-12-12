@@ -1,22 +1,22 @@
 {
-  "name": "@gitevents/propaganda",
+  "name": "@gitevents/broadcast",
   "version": "1.0.0",
   "description": "Sustainable tech communities with Issue Ops",
   "keywords": [
     "gitevents",
     "events",
     "issue ops",
-    "propaganda",
+    "broadcast",
     "github",
     "action"
   ],
   "homepage": "https://gitevents.org/",
   "bugs": {
-    "url": "https://github.com/gitevents/propaganda/issues"
+    "url": "https://github.com/gitevents/broadcast/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gitevents/propaganda.git"
+    "url": "git+https://github.com/gitevents/broadcast.git"
   },
   "license": "MIT",
   "author": "Patrick Heneise <patrick@zentered.co> (https://zentered.co)",
@@ -70,16 +70,16 @@
     "@octokit/auth-app": "^3.6.1"
   },
   "devDependencies": {
-    "@commitlint/config-conventional": "^17.0.2",
-    "@vercel/ncc": "^0.34.0",
-    "commitlint": "^17.0.2",
-    "eslint": "^8.18.0",
+    "@commitlint/config-conventional": "^17.3.0",
+    "@vercel/ncc": "^0.36.0",
+    "commitlint": "^17.3.0",
+    "eslint": "^8.29.0",
     "eslint-plugin-json": "^3.1.0",
     "eslint-plugin-node": "^11.1.0",
-    "husky": "^8.0.1",
+    "husky": "^8.0.2",
     "license-checker": "^25.0.1",
     "pinst": "^3.0.0",
-    "prettier": "^2.7.1",
-    "tap": "^16.3.0"
+    "prettier": "^2.8.1",
+    "tap": "^16.3.2"
   }
 }

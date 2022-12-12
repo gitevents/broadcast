@@ -1,4 +1,4 @@
-# GitEvents Propaganda Action
+# GitEvents Broadcast Action
 
 <p align="center">
   <img src="assets/gitevents-flow.png">
@@ -32,7 +32,7 @@ on:
 jobs:
   reuse:
     if: contains( github.event.issue.labels.*.name, 'Approved' )
-    uses: gitevents/propaganda/.github/workflows/discord-event.yml@main
+    uses: gitevents/broadcast/.github/workflows/discord-event.yml@main
     with:
       server-id: "983632632514498621"
       time-zone: 'Europe/Nicosia'
