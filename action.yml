@@ -3,6 +3,19 @@ description: 'Event / Meetup Automation :robot:'
 branding:
   color: yellow
   icon: rss
+inputs:
+  enable-eventbrite:
+    description: 'Enable Eventbrite Integration'
+    required: false
+    default: 'false'
+  eventbrite-api-key:
+    description: 'Eventbrite API Key'
+    default: ''
+    required: false
+  eventbrite-organization-id:
+    description: 'Eventbrite Organization ID'
+    default: ''
+    required: false
 runs:
   main: src/index.js
   using: node16
