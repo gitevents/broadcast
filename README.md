@@ -38,6 +38,30 @@ jobs:
       time-zone: 'Europe/Nicosia'
 ```
 
+### EventBrite Events
+
+Set `enable-eventbrite` to `true` and add `EVENTBRITE_API_KEY` and `EVENTBRITE_ORG_ID` to your GitHub Action Secrets.
+
+```yml
+- name: Broadcast Event
+  uses: gitevents/broadcast@v1.0.0
+  env:
+    EVENTBRITE_API_KEY: ${{ secrets.EVENTBRITE_API_KEY }}
+    EVENTBRITE_ORG_ID: ${{ secrets.EVENTBRITE_ORG_ID }}
+  with:
+    enable-eventbrite: true
+```
+
+#### Retrieve an API Key & Organization ID
+
+This is a bit more tricky than it should be. Go to the [account settings](https://www.eventbrite.com/account-settings/apps) and create an API Key. With the "Private token", [fetch your organizations](https://www.eventbrite.com/platform/docs/events):
+
+```bash
+curl -X GET   https://www.eventbriteapi.com/v3/organizations/{organization_id}/events/   -H 'Authorization: Bearer PRIVATE_TOKEN'
+```
+
+In the response you'll find the organization id.
+
 ### OpenCollective Events
 
 coming soon

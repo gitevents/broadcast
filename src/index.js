@@ -12,8 +12,6 @@ async function run() {
   const appInstallationId = core.getInput('gitevents-app-installation-id')
 
   const enableEventbrite = core.getInput('enable-eventbrite')
-  const eventbriteApiKey = core.getInput('eventbrite-api-key')
-  const eventbriteOrganizationId = core.getInput('eventbrite-organization-id')
 
   const octokit = new Octokit({
     authStrategy: createAppAuth,
@@ -33,10 +31,7 @@ async function run() {
     const issueData = await bodyParser(context.payload.issue.body)
 
     if (enableEventbrite === 'true') {
-      eventbrite(issueData, context, {
-        apiKey: eventbriteApiKey,
-        organizationId: eventbriteOrganizationId
-      })
+      await eventbrite(issueData, context)
     }
   }
 }
