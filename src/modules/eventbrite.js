@@ -1,8 +1,39 @@
 import core from '@actions/core'
 
-function createEventApiUrl(organizationId) {
-  return `https://www.eventbriteapi.com/v3/organizations/${organizationId}/events/`
-  // return 'https://www.eventbriteapi.com/v3/users/me/organizations/'
+const apiKey = process.env.EVENTBRITE_API_KEY
+const organizationId = process.env.EVENTBRITE_ORG_ID
+
+function createEventApiUrl(organizationId,eventId) {
+  if( eventId ) {
+  return `https://www.eventbriteapi.com/v3/organizations/${organizationId}/events/${eventId}`
+} else {
+    return `https://www.eventbriteapi.com/v3/organizations/${organizationId}/events/`
+  }
+}
+
+async function updateEvent(parsedContent) {
+  const messageIdRegEx = new RegExp(/message=(\d+)/)
+  const eventId = messageIdRegEx.exec(parsedContent['broadcast-by-git-events'].text)[1]
+    const apiUrl = createEventApiUrl(organizationId,eventId)
+    core.debug('Updating Event: ' + apiUrl)
+    const eventsResponse = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: {
+        event: {
+
+        }
+      }
+    })
+    const eventData = await eventsResponse.json()
+    
+}
+
+async functon createEvent() {
+
 }
 
 /**
@@ -12,19 +43,13 @@ function createEventApiUrl(organizationId) {
  * @param {*} context
  */
 export default async function eventbrite(parsedContent, context) {
-  const organizationId = process.env.EVENTBRITE_ORG_ID
-  const apiKey = process.env.EVENTBRITE_API_KEY
-
-  const apiUrl = createEventApiUrl(organizationId)
-  core.debug('Fetching Events: ' + apiUrl)
-  const eventsResponse = await fetch(apiUrl, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    }
-  })
-  const data = await eventsResponse.json()
-
-  console.log(JSON.stringify(data, null, 2))
+  
+  if (
+    parsedContent['broadcast-by-git-events'] &&
+    parsedContent['broadcast-by-git-events'].text &&
+    parsedContent['broadcast-by-git-events'].text.includes('Eventbrite')
+  ) {
+    // Eventbrite event found. Update event.
+    updateEvent(parsedContent)
+  }
 }

@@ -30,6 +30,9 @@ async function run() {
   if (context.eventName === 'issues') {
     const issueData = await bodyParser(context.payload.issue.body)
 
+    //TODO: parse event-description.list links and fetch github issue title
+    //TODO: fetch locations.json and enhance location
+
     if (enableEventbrite === 'true') {
       await eventbrite(issueData, context)
     }
