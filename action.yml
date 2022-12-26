@@ -3,6 +3,11 @@ description: 'Event / Meetup Automation :robot:'
 branding:
   color: yellow
   icon: rss
+inputs:
+  enable-eventbrite:
+    description: 'Enable Eventbrite Integration'
+    required: false
+    default: 'false'
 runs:
   main: src/index.js
   using: node16
