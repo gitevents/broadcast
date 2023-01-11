@@ -3,6 +3,7 @@ import github from '@actions/github'
 import { Octokit } from '@octokit/rest'
 import { createAppAuth } from '@octokit/auth-app'
 import bodyParser from '@zentered/issue-forms-body-parser'
+import resolveAgendaLinks from './resolveAgendaLinks.js'
 import eventbrite from './modules/eventbrite.js'
 
 async function run() {
@@ -29,7 +30,9 @@ async function run() {
 
   if (context.eventName === 'issues') {
     const issueData = await bodyParser(context.payload.issue.body)
+    const agendaItems = await resolveAgendaLinks(octokit, issueData)
 
+    console.log(agendaItems)
     //TODO: parse event-description.list links and fetch github issue title
     //TODO: fetch locations.json and enhance location
 

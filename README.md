@@ -74,6 +74,14 @@ coming soon
 
 coming soon
 
+## Contribute
+
+### Local testing
+
+```bash
+    act --env-file .env -e test/issue.json workflow_dispatch
+```
+
 ## License
 
 Licensed under [MIT](./LICENSE).

@@ -1,0 +1,44 @@
+{
+  "payload": {
+    "action": "opened",
+    "issue": {
+      "assignee": null,
+      "assignees": [],
+      "author_association": "CONTRIBUTOR",
+      "body": "",
+      "closed_at": null,
+      "id": 1018508412,
+      "labels": [],
+      "labels_url": "https://api.github.com/repos/gitevents/action/issues/16/labels{/name}",
+      "number": 1,
+      "reactions": {
+        "+1": 0,
+        "-1": 0,
+        "confused": 0,
+        "eyes": 0,
+        "heart": 0,
+        "hooray": 0,
+        "laugh": 0,
+        "rocket": 0,
+        "total_count": 0,
+        "url": "https://api.github.com/repos/gitevents/action/issues/16/reactions"
+      },
+      "repository_url": "https://api.github.com/repos/gitevents/action",
+      "state": "open",
+      "timeline_url": "https://api.github.com/repos/gitevents/action/issues/16/timeline",
+      "title": "Awesome Event",
+      "updated_at": "2022-10-06T14:58:23Z",
+      "url": "https://api.github.com/repos/gitevents/action/issues/1",
+      "user": {
+        "login": "PatrickHeneise"
+      }
+    }
+  },
+  "eventName": "issues",
+  "ref": "refs/heads/main",
+  "workflow": "Integraton Test",
+  "action": "__self",
+  "actor": "PatrickHeneise",
+  "job": "test",
+  "runNumber": 1
+}
