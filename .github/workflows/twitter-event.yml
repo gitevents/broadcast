@@ -1,4 +1,4 @@
-name: Tween an Event on Twitter
+name: Tweet an Event on Twitter
 
 on:
   workflow_call:
