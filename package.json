@@ -38,7 +38,7 @@
     "prepare": "ncc build src/index.js -o dist --source-map --license licenses.txt",
     "prepublishOnly": "pinst --disable",
     "postpublish": "pinst --enable",
-    "test": "tap"
+    "test": "node --test"
   },
   "commitlint": {
     "extends": [
@@ -79,7 +79,6 @@
     "husky": "^9.0.6",
     "license-checker": "^25.0.1",
     "pinst": "^3.0.0",
-    "prettier": "^3.2.4",
-    "tap": "^18.7.0"
+    "prettier": "^3.2.4"
   }
 }

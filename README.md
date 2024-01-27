@@ -40,15 +40,11 @@ jobs:
 
 ### OpenCollective Events
 
-coming soon
+TBD
 
-### Twitter Reminders
+### Meetup Events
 
-coming soon
-
-### Facebook Events
-
-coming soon
+TBD
 
 ## License
 
