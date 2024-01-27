@@ -4,5 +4,5 @@ branding:
   color: yellow
   icon: rss
 runs:
-  main: src/index.js
-  using: node16
+  main: dist/index.js
+  using: node20
