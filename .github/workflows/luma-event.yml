@@ -1,0 +1,75 @@
+name: Create Events on Luma
+
+permissions:
+  issues: write
+
+on:
+  workflow_call:
+    inputs:
+      talks-repo:
+        required: false
+        type: string
+    secrets:
+      LUMA_EMAIL:
+        required: true
+      LUMA_PASSWORD:
+        required: true
+      GH_PAT:
+        required: false
+
+jobs:
+  broadcast-luma:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: gitevents/broadcast
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+
+      - name: Detect lifecycle
+        id: lifecycle
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { detectLifecycle } = require('./dist/lifecycle.js')
+            const lifecycle = detectLifecycle(context)
+            core.setOutput('type', lifecycle.type)
+
+      - name: Fetch and transform data
+        if: steps.lifecycle.outputs.type != 'none'
+        id: prepare
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { fetchEventData } = require('./dist/fetcher.js')
+            const { transformForLuma } = require('./dist/transformer.js')
+            const eventData = await fetchEventData(context, { talksRepo: '' })
+            const payload = await transformForLuma(eventData)
+            core.setOutput('payload', JSON.stringify(payload))
+
+      - name: Submit to Luma (placeholder)
+        if: steps.lifecycle.outputs.type != 'none'
+        run: echo "Luma provider placeholder - not yet implemented"
+
+      - name: Comment on issue
+        if: steps.lifecycle.outputs.type != 'none'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ Luma provider not yet implemented'
+            })

@@ -1,0 +1,33 @@
+# Example workflow for a talks repository
+# Announces new talk submissions to social media
+
+name: Announce New Talks
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  # Announce when a talk is accepted
+  announce-talk:
+    if: contains(github.event.issue.labels.*.name, 'Talk Accepted')
+    uses: gitevents/broadcast/.github/workflows/bluesky-event.yml@main
+    with:
+      # Talks announcements might not need cross-repo fetching
+      # since the talk data is already in this repository
+      talks-repo: ''
+    secrets:
+      BSKY_IDENTIFIER: ${{ secrets.BSKY_IDENTIFIER }}
+      BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+  # You could also announce on Discord
+  # announce-discord:
+  #   if: contains(github.event.issue.labels.*.name, 'Talk Accepted')
+  #   uses: gitevents/broadcast/.github/workflows/discord-event.yml@main
+  #   with:
+  #     server-id: '123456789'
+  #     time-zone: 'Europe/Nicosia'
+  #     talks-repo: ''
+  #   secrets:
+  #     GH_PAT: ${{ secrets.GH_PAT }}

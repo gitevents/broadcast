@@ -1,0 +1,57 @@
+# Example workflow for an events repository
+# Place this in: .github/workflows/broadcast-events.yml
+
+name: Broadcast Events
+
+on:
+  issues:
+    types: [labeled, edited]
+
+jobs:
+  # Only run if event is approved or cancelled
+  broadcast:
+    if: |
+      contains(github.event.issue.labels.*.name, 'Approved') ||
+      contains(github.event.issue.labels.*.name, 'Cancelled')
+    strategy:
+      matrix:
+        provider:
+          - discord
+          - bluesky
+          # Uncomment when ready to use:
+          # - mailchimp
+          # - meetup
+          # - luma
+      fail-fast: false
+    uses: gitevents/broadcast/.github/workflows/${{ matrix.provider }}-event.yml@main
+    with:
+      # Provider-specific configuration
+      # Discord requires server-id and time-zone
+      server-id: ${{ matrix.provider == 'discord' && '123456789' || '' }}
+      time-zone: ${{ matrix.provider == 'discord' && 'Europe/Nicosia' || '' }}
+
+      # Meetup requires group-urlname
+      group-urlname: ${{ matrix.provider == 'meetup' && 'cyprus-js' || '' }}
+
+      # Mailchimp requires list-id
+      list-id: ${{ matrix.provider == 'mailchimp' && 'abc123' || '' }}
+
+      # Cross-repo talks configuration (optional)
+      # If your talks are in a separate repository, specify it here
+      talks-repo: 'myorg/talks'
+    secrets:
+      # GitHub authentication (for fetching data)
+      GH_PAT: ${{ secrets.GH_PAT }}
+      # Or use GitHub App authentication:
+      # GH_APP_ID: ${{ secrets.GH_APP_ID }}
+      # GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+      # GH_APP_INSTALLATION_ID: ${{ secrets.GH_APP_INSTALLATION_ID }}
+
+      # Provider-specific secrets
+      BSKY_IDENTIFIER: ${{ secrets.BSKY_IDENTIFIER }}
+      BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
+      MEETUP_EMAIL: ${{ secrets.MEETUP_EMAIL }}
+      MEETUP_PASSWORD: ${{ secrets.MEETUP_PASSWORD }}
+      MAILCHIMP_API_KEY: ${{ secrets.MAILCHIMP_API_KEY }}
+      LUMA_EMAIL: ${{ secrets.LUMA_EMAIL }}
+      LUMA_PASSWORD: ${{ secrets.LUMA_PASSWORD }}

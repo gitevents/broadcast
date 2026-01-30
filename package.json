@@ -35,7 +35,7 @@
     "postinstall": "husky install",
     "license-checker": "license-checker --production --onlyAllow=\"MIT;ISC;BSD-3-Clause;BSD-2-Clause;Apache-2.0\"",
     "lint": "eslint .",
-    "prepare": "ncc build src/index.js -o dist --source-map --license licenses.txt",
+    "prepare": "ncc build src/index.js -o dist --source-map --license licenses.txt --external @gitevents/fetch",
     "prepublishOnly": "pinst --disable",
     "postpublish": "pinst --enable",
     "test": "node --test"
@@ -66,8 +66,12 @@
   "dependencies": {
     "@actions/core": "^1.11.1",
     "@actions/github": "^6.0.0",
+    "@gitevents/fetch": "workspace:*",
     "@octokit/auth-app": "^6.1.3",
-    "@octokit/rest": "^20.1.1"
+    "@octokit/rest": "^20.1.1",
+    "@zentered/issue-forms-body-parser": "^2.2.0",
+    "date-fns": "^2.30.0",
+    "date-fns-tz": "^2.0.1"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^18.6.3",
@@ -79,6 +83,7 @@
     "husky": "^9.1.7",
     "license-checker": "^25.0.1",
     "pinst": "^3.0.0",
+    "playwright": "^1.40.0",
     "prettier": "^3.5.1"
   }
 }

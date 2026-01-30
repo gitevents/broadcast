@@ -1,32 +1,38 @@
-import core from '@actions/core'
-import github from '@actions/github'
-import { Octokit } from '@octokit/rest'
-import { createAppAuth } from '@octokit/auth-app'
+// Main entry point for GitEvents Broadcast
+// Exports all modules for use in GitHub Actions workflows
 
-async function run() {
-  core.info('Starting GitEvents Broadcast...')
-  const appId = core.getInput('gitevents-app-id')
-  const appPrivateKey = core.getInput('gitevents-app-private-key')
-  const appInstallationId = core.getInput('gitevents-app-installation-id')
+// Data fetching
+export { fetchEventData } from './fetcher.js'
 
-  const octokit = new Octokit({
-    authStrategy: createAppAuth,
-    auth: {
-      appId: appId,
-      privateKey: appPrivateKey,
-      installationId: appInstallationId
-    }
-  })
-  const context = github.context
+// Lifecycle management
+export {
+  detectLifecycle,
+  storeProviderEventIds,
+  extractProviderEventIds,
+  getProviderEventId,
+  setProviderEventId
+} from './lifecycle.js'
 
-  const { data: appUser } = await octokit.rest.apps.getAuthenticated()
-  const botUser = `${appUser.slug}[bot]`
-  context.botUser = botUser
+// Data transformation
+export {
+  transformForDiscord,
+  transformForBluesky,
+  transformForMailchimp,
+  transformForMeetup,
+  transformForLuma
+} from './transformer.js'
 
-  // if (context.eventName === 'issues') {
-  //   const issues from './issues.js')
-  //   await issues(octokit, context, core)
-  // }
-}
+// Provider base classes
+export { BaseProvider } from './providers/base-provider.js'
+export { ApiProvider } from './providers/api-provider.js'
+export {
+  FormProvider,
+  fillFieldWithFallback
+} from './providers/form-provider.js'
 
-run()
+// Provider implementations
+export { DiscordProvider } from './providers/discord.js'
+export { BlueskyProvider } from './providers/bluesky.js'
+export { MailchimpProvider } from './providers/mailchimp.js'
+export { MeetupProvider } from './providers/meetup.js'
+export { LumaProvider } from './providers/luma.js'
