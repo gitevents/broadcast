@@ -33,7 +33,68 @@ Broadcast your community events to multiple platforms automatically using GitHub
 
 ## Quick Start
 
+### Unified Workflow (Recommended)
+
+Use the single unified workflow to broadcast to multiple platforms:
+
+```yaml
+# .github/workflows/broadcast-events.yml
+name: Broadcast Events
+
+on:
+  issues:
+    types: [labeled, edited]
+
+jobs:
+  broadcast:
+    if: |
+      contains(github.event.issue.labels.*.name, 'Approved') ||
+      contains(github.event.issue.labels.*.name, 'Cancelled')
+    permissions:
+      id-token: write
+      issues: write
+    uses: gitevents/broadcast/.github/workflows/broadcast.yml@v1
+    with:
+      # Enable providers
+      enable_discord: true
+      enable_bluesky: true
+      enable_mailchimp: false
+      enable_meetup: false
+      enable_luma: false
+
+      # Discord config (required if enable_discord: true)
+      discord-server-id: 'YOUR_DISCORD_SERVER_ID'
+      discord-time-zone: 'Europe/Nicosia'
+
+      # Optional: cross-repo talks
+      talks-repo: 'myorg/talks'
+
+    secrets:
+      # GitHub auth (always needed)
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+      # Provider-specific secrets (only needed if provider enabled)
+      BSKY_IDENTIFIER: ${{ secrets.BSKY_IDENTIFIER }}
+      BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
+      MAILCHIMP_API_KEY: ${{ secrets.MAILCHIMP_API_KEY }}
+```
+
+**Benefits:**
+
+- Single workflow file to maintain
+- Enable/disable providers with boolean flags
+- Missing credentials skip provider (no workflow failure)
+- All providers run in parallel
+
+---
+
+### Provider-Specific Workflows (Legacy)
+
+> **⚠️ Deprecated:** These individual workflows are maintained for backward compatibility but will be removed in v2.0.0. Please migrate to the unified workflow above.
+
 ### 1. Discord Events
+
+> **⚠️ Deprecated:** Use the unified workflow above. This approach is maintained for backward compatibility only.
 
 Add the Discord Bot and create a workflow in your events repository:
 
@@ -66,6 +127,8 @@ jobs:
 
 ### 2. Bluesky Posts
 
+> **⚠️ Deprecated:** Use the unified workflow above. This approach is maintained for backward compatibility only.
+
 Announce events on Bluesky with rich talk information:
 
 ```yaml
@@ -83,40 +146,26 @@ jobs:
 
 ### 3. Multi-Platform Broadcasting
 
-Broadcast to multiple platforms simultaneously:
+The unified workflow broadcasts to multiple platforms automatically:
 
 ```yaml
-name: Broadcast Events
-
-on:
-  issues:
-    types: [labeled, edited]
-
 jobs:
   broadcast:
-    if: |
-      contains(github.event.issue.labels.*.name, 'Approved') ||
-      contains(github.event.issue.labels.*.name, 'Cancelled')
-    strategy:
-      matrix:
-        provider:
-          - discord
-          - bluesky
-          # Coming soon:
-          # - mailchimp
-          # - meetup
-          # - luma
-      fail-fast: false
-    uses: gitevents/broadcast/.github/workflows/${{ matrix.provider }}-event.yml@main
+    uses: gitevents/broadcast/.github/workflows/broadcast.yml@v1
     with:
-      server-id: ${{ matrix.provider == 'discord' && 'YOUR_SERVER_ID' || '' }}
-      time-zone: ${{ matrix.provider == 'discord' && 'Europe/Nicosia' || '' }}
-      talks-repo: 'myorg/talks'
-    secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
-      BSKY_IDENTIFIER: ${{ secrets.BSKY_IDENTIFIER }}
-      BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
+      enable_discord: true
+      enable_bluesky: true
+      enable_mailchimp: true
+      # ... configure each enabled provider
 ```
+
+**Runtime Behavior:**
+
+- Missing credentials skip provider (no failure)
+- Individual status comments per provider:
+  - ✅ Event created on Discord
+  - ✅ Event posted on Bluesky
+  - ⚠️ Skipped Mailchimp: Missing required config: MAILCHIMP_API_KEY
 
 See [examples/events-repo-workflow.yml](examples/events-repo-workflow.yml) for a complete example.
 
@@ -316,6 +365,49 @@ npm run lint
 
 - [events-repo-workflow.yml](examples/events-repo-workflow.yml): Complete example for events repository
 - [talks-repo-workflow.yml](examples/talks-repo-workflow.yml): Example for talks repository announcements
+
+## Migration Guide
+
+### From Provider-Specific Workflows
+
+If you're using individual provider workflows (`discord-event.yml`, `bluesky-event.yml`), migrate to the unified workflow:
+
+**Before:**
+
+```yaml
+jobs:
+  discord:
+    uses: gitevents/broadcast/.github/workflows/discord-event.yml@main
+    with:
+      server-id: '855088264180400198'
+      time-zone: 'Europe/Nicosia'
+```
+
+**After:**
+
+```yaml
+jobs:
+  broadcast:
+    uses: gitevents/broadcast/.github/workflows/broadcast.yml@v1
+    with:
+      enable_discord: true
+      discord-server-id: '855088264180400198'
+      discord-time-zone: 'Europe/Nicosia'
+```
+
+**Changes:**
+
+1. Use `broadcast.yml` instead of provider-specific workflows
+2. Add `enable_<provider>: true` for each provider
+3. Update parameter names (e.g., `server-id` → `discord-server-id`)
+4. Add `permissions: { id-token: write, issues: write }` to job
+
+**Timeline:**
+
+- v1.x: Both approaches supported (deprecated warnings in old workflows)
+- v2.0.0 (6+ months): Provider-specific workflows removed
+
+---
 
 ## Related Projects
 
