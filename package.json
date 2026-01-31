@@ -38,7 +38,7 @@
     "prepare": "ncc build src/index.js -o dist --source-map --license licenses.txt --external @gitevents/fetch",
     "prepublishOnly": "pinst --disable",
     "postpublish": "pinst --enable",
-    "test": "node --test"
+    "test": "node --test --experimental-loader ./test/gql-loader.js"
   },
   "commitlint": {
     "extends": [
