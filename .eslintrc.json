@@ -11,5 +11,28 @@
   "parserOptions": {
     "ecmaVersion": 2021,
     "sourceType": "module"
-  }
+  },
+  "rules": {
+    "node/no-unsupported-features/es-syntax": [
+      "error",
+      {
+        "ignores": ["dynamicImport", "modules", "restSpreadProperties"]
+      }
+    ],
+    "node/no-unsupported-features/es-builtins": [
+      "error",
+      {
+        "version": ">=14.0.0"
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/providers/*.js"],
+      "rules": {
+        "no-unused-vars": "warn",
+        "node/no-unpublished-import": "warn"
+      }
+    }
+  ]
 }
