@@ -1,8 +1,9 @@
-name: GitEvents Broadcast Action
-description: 'Event / Meetup Automation :robot:'
+name: 'GitEvents Broadcast'
+description: 'Broadcast events to Discord, Bluesky, Mailchimp, Meetup, and Luma'
+author: 'GitEvents'
 branding:
-  color: yellow
-  icon: rss
+  icon: 'radio'
+  color: 'blue'
 runs:
   main: dist/index.js
   using: node20
