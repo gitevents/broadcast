@@ -26,6 +26,7 @@ npm run prepare        # Build dist bundle with ncc
 ```
 
 The `dist/index.js` bundle will:
+
 - Include all other dependencies (date-fns, @zentered/issue-forms-body-parser, etc.)
 - Import @gitevents/fetch as an external ES module
 - Be used by GitHub Actions workflows via `require('./dist/...')`
@@ -33,6 +34,7 @@ The `dist/index.js` bundle will:
 ### Runtime Requirements
 
 The GitHub Actions workflows must:
+
 1. Checkout the broadcast repository
 2. Run `npm ci` to install dependencies (including @gitevents/fetch)
 3. Load modules from `dist/` which will import @gitevents/fetch at runtime
@@ -61,10 +63,12 @@ This is already configured in all workflow files:
 ## Troubleshooting
 
 **If you see "Cannot find package '@gitevents/fetch'":**
+
 - Ensure `npm ci` ran successfully before using bundled code
 - Check that package.json has `"@gitevents/fetch": "workspace:*"`
 - Verify the workflow checks out the gitevents/broadcast repository
 
 **If you see GraphQL parse errors:**
+
 - Ensure `--external @gitevents/fetch` is in the ncc build command
 - Don't try to bundle .gql files with ncc

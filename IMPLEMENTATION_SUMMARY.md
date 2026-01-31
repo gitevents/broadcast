@@ -5,17 +5,20 @@
 ### 1. Core Infrastructure (src/)
 
 **src/fetcher.js** - Event Data Fetcher
+
 - Fetches event data using @gitevents/fetch
 - Supports cross-repo talk fetching
 - Optional speaker profile enrichment
 - Graceful error handling
 
 **src/lifecycle.js** - State Management
+
 - Detects create/update/cancel from labels
 - Stores provider event IDs in issue body (HTML comments)
 - State machine logic for lifecycle transitions
 
 **src/transformer.js** - Data Transformers
+
 - `transformForDiscord()` - Discord scheduled events format
 - `transformForBluesky()` - Social media posts with talks
 - `transformForMailchimp()` - Email campaign format (placeholder)
@@ -24,19 +27,22 @@
 - Timezone handling with date-fns/date-fns-tz
 
 **src/index.js** - Main Entry Point
+
 - Exports all modules for use in workflows
 - 20 exported functions and classes
 
 ### 2. Provider Architecture (src/providers/)
 
 **Abstract Base Classes:**
+
 - `BaseProvider` - Interface definition
 - `ApiProvider` - HTTP client for API providers
 - `FormProvider` - Playwright automation for form providers
 
 **Provider Implementations (Placeholders):**
+
 - `DiscordProvider` - extends ApiProvider
-- `BlueskyProvider` - extends ApiProvider  
+- `BlueskyProvider` - extends ApiProvider
 - `MailchimpProvider` - extends ApiProvider
 - `MeetupProvider` - extends FormProvider
 - `LumaProvider` - extends FormProvider
@@ -44,6 +50,7 @@
 ### 3. Enhanced Workflows (.github/workflows/)
 
 **discord-event.yml** - Production Ready
+
 - Lifecycle detection
 - Event data fetching with cross-repo talks
 - Data transformation for Discord format
@@ -51,12 +58,14 @@
 - Issue comments and labels
 
 **bluesky-event.yml** - Production Ready
+
 - Lifecycle detection
 - Rich event data with talk listings
 - Social media formatting
 - Issue comments and labels
 
 **Placeholder Workflows:**
+
 - mailchimp-event.yml
 - meetup-event.yml (with Playwright)
 - luma-event.yml (with Playwright)
@@ -64,6 +73,7 @@
 ### 4. Documentation & Examples
 
 **README.md** - Comprehensive Guide
+
 - Multi-platform broadcasting overview
 - Quick start guides for each provider
 - Configuration reference
@@ -72,23 +82,27 @@
 - Development guide
 
 **BUILD.md** - Build Configuration
+
 - ncc configuration explained
 - External dependency handling
 - Runtime requirements
 - Troubleshooting guide
 
 **examples/events-repo-workflow.yml**
+
 - Complete multi-platform example
 - Provider configuration matrix
 - Secrets management
 
 **examples/talks-repo-workflow.yml**
+
 - Talk announcement workflow
 - Bluesky + Discord integration
 
 ### 5. Build Configuration
 
 **package.json Updates:**
+
 - Added @gitevents/fetch (workspace)
 - Added @zentered/issue-forms-body-parser
 - Added date-fns and date-fns-tz
@@ -96,12 +110,14 @@
 - Configured ncc with `--external @gitevents/fetch`
 
 **Build Process:**
+
 ```bash
 npm ci                  # Install dependencies
 npm run prepare        # Build dist bundle (5.4MB)
 ```
 
 **Bundle Output (dist/):**
+
 - index.js (5.4MB) - All code bundled
 - index.js.map (5.5MB) - Source maps
 - licenses.txt (97KB) - Dependency licenses
@@ -110,6 +126,7 @@ npm run prepare        # Build dist bundle (5.4MB)
 ## 🎯 Ready for Production
 
 ### Working Now:
+
 ✅ Discord events (with enhanced data)
 ✅ Bluesky posts (with rich formatting)
 ✅ Cross-repo talk fetching
@@ -118,6 +135,7 @@ npm run prepare        # Build dist bundle (5.4MB)
 ✅ Build system configured
 
 ### Placeholder (Ready for Implementation):
+
 ⚠️ Mailchimp campaigns
 ⚠️ Meetup event creation (Playwright)
 ⚠️ Luma event creation (Playwright)
@@ -152,6 +170,7 @@ npm run prepare        # Build dist bundle (5.4MB)
 ## 🏗️ Architecture Highlights
 
 **Data Flow:**
+
 ```
 Issue Event (labeled/edited)
   ↓
@@ -169,6 +188,7 @@ Update Issue (comment + label)
 ```
 
 **Key Features:**
+
 - Reusable workflows (other repos call via workflow_call)
 - Cross-repo data fetching
 - Label-based state machine
@@ -187,6 +207,7 @@ Update Issue (comment + label)
 ## 🚀 Deployment Ready
 
 All infrastructure is in place for users to:
+
 1. Add workflows to their events repository
 2. Configure provider secrets
 3. Label issues as "Approved"
