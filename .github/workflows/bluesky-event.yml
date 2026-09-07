@@ -1,24 +1,147 @@
 name: Post an Event on Bluesky
 
+permissions:
+  issues: write
+
 on:
   workflow_call:
     inputs:
-      post:
+      talks-repo:
+        required: false
         type: string
-        required: true
+        description: 'Talks repository (owner/repo) for cross-repo fetching'
     secrets:
       BSKY_IDENTIFIER:
         required: true
       BSKY_PASSWORD:
         required: true
+      GH_APP_ID:
+        required: false
+      GH_APP_PRIVATE_KEY:
+        required: false
+      GH_APP_INSTALLATION_ID:
+        required: false
+      GH_PAT:
+        required: false
 
 jobs:
   bluesky:
     runs-on: ubuntu-latest
     steps:
-      - uses: zentered/bluesky-post-action@v0.2.0
+      - name: Checkout broadcast repo
+        uses: actions/checkout@v4
         with:
-          post: ${{ inputs.post }}
+          repository: gitevents/broadcast
+          # Pin to this reusable workflow's own commit, so a caller pinning a
+          # tag gets that tag's dist/ rather than the default branch's.
+          ref: ${{ github.job_workflow_sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deprecation warning
+        run: |
+          echo "⚠️  WARNING: This workflow is deprecated and will be removed in v2.0.0"
+          echo "📖 Please migrate to the unified broadcast workflow:"
+          echo "   uses: gitevents/broadcast/.github/workflows/broadcast.yml@v1"
+          echo "🔗 Migration guide: https://github.com/gitevents/broadcast#migration-guide"
+
+      - name: Detect lifecycle
+        id: lifecycle
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // dist/ is one ES module bundle; import() works on every Node 20.x
+            const { pathToFileURL } = require('node:url')
+            const { detectLifecycle } = await import(
+              pathToFileURL(`${process.env.GITHUB_WORKSPACE}/dist/index.js`).href
+            )
+            const lifecycle = detectLifecycle(context)
+            core.setOutput('type', lifecycle.type)
+            core.setOutput('reason', lifecycle.reason)
+            core.info(`Lifecycle: ${lifecycle.type} - ${lifecycle.reason}`)
+
+      - name: Fetch event data
+        if: steps.lifecycle.outputs.type != 'none'
+        id: fetch
+        uses: actions/github-script@v7
+        env:
+          TALKS_REPO: ${{ inputs.talks-repo }}
+          GH_PAT: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          GH_APP_ID: ${{ secrets.GH_APP_ID }}
+          # @gitevents/fetch reads GH_PRIVATE_KEY (base64-encoded)
+          GH_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          GH_APP_INSTALLATION_ID: ${{ secrets.GH_APP_INSTALLATION_ID }}
+        with:
+          script: |
+            // dist/ is one ES module bundle; import() works on every Node 20.x
+            const { pathToFileURL } = require('node:url')
+            const { fetchEventData } = await import(
+              pathToFileURL(`${process.env.GITHUB_WORKSPACE}/dist/index.js`).href
+            )
+            const eventData = await fetchEventData(context, {
+              talksRepo: process.env.TALKS_REPO || '',
+              enrichSpeakers: false
+            })
+            core.setOutput('event-data', JSON.stringify(eventData))
+
+      - name: Transform for Bluesky
+        if: steps.lifecycle.outputs.type != 'none'
+        id: transform
+        uses: actions/github-script@v7
+        env:
+          EVENT_DATA: ${{ steps.fetch.outputs.event-data }}
+        with:
+          script: |
+            // dist/ is one ES module bundle; import() works on every Node 20.x
+            const { pathToFileURL } = require('node:url')
+            const { transformForBluesky } = await import(
+              pathToFileURL(`${process.env.GITHUB_WORKSPACE}/dist/index.js`).href
+            )
+            const eventData = JSON.parse(process.env.EVENT_DATA)
+            const payload = await transformForBluesky(eventData)
+            core.setOutput('post-text', payload.text)
+
+      - name: Post to Bluesky
+        if: steps.lifecycle.outputs.type != 'none'
+        id: post
+        uses: zentered/bluesky-post-action@v0.2.0
+        with:
+          post: ${{ steps.transform.outputs.post-text }}
         env:
           BSKY_IDENTIFIER: ${{ secrets.BSKY_IDENTIFIER }}
           BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
+
+      - name: Comment on issue
+        if: always() && steps.lifecycle.outputs.type != 'none'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const outcome = '${{ steps.post.outcome }}'
+            const lifecycle = '${{ steps.lifecycle.outputs.type }}'
+            const emoji = outcome === 'success' ? '✅' : '❌'
+            const action = lifecycle === 'create' ? 'posted' : lifecycle === 'update' ? 'updated' : 'cancelled'
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${emoji} Event ${action} on Bluesky`
+            })
+
+      - name: Add Event Created label
+        if: success() && steps.lifecycle.outputs.type == 'create'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['Event Created ✓']
+            })

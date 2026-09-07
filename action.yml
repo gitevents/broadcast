@@ -1,8 +1,47 @@
-name: GitEvents Broadcast Action
-description: 'Event / Meetup Automation :robot:'
+name: 'GitEvents Broadcast'
+description: 'Broadcast events to Discord, Bluesky, Mailchimp, Meetup, and Luma'
+author: 'GitEvents'
 branding:
-  color: yellow
-  icon: rss
+  icon: 'radio'
+  color: 'blue'
+
+inputs:
+  enable-discord:
+    required: false
+    default: 'false'
+    description: 'Enable Discord scheduled events'
+  enable-bluesky:
+    required: false
+    default: 'false'
+    description: 'Enable Bluesky posts'
+  enable-mailchimp:
+    required: false
+    default: 'false'
+    description: 'Enable Mailchimp campaigns'
+  enable-meetup:
+    required: false
+    default: 'false'
+    description: 'Enable Meetup events'
+  enable-luma:
+    required: false
+    default: 'false'
+    description: 'Enable Luma events'
+  discord-server-id:
+    required: false
+    description: 'Discord server/guild ID'
+  discord-time-zone:
+    required: false
+    description: 'Event timezone (e.g., Europe/Nicosia)'
+  talks-repo:
+    required: false
+    description: 'Cross-repo talks repository (owner/repo)'
+
+outputs:
+  results:
+    description: 'JSON array of per-provider broadcast results'
+
 runs:
-  main: dist/index.js
+  # src/index.js is the library barrel and has no side effects, so it cannot be
+  # the entrypoint: it would make this action a silently passing no-op.
+  main: dist/action/index.js
   using: node20

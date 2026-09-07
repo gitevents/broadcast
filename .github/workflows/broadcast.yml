@@ -1,0 +1,222 @@
+# .github/workflows/broadcast.yml
+name: Broadcast Event
+
+permissions:
+  id-token: write
+  issues: write
+
+on:
+  workflow_call:
+    inputs:
+      # Provider toggles (default: false)
+      enable_discord:
+        type: boolean
+        default: false
+        description: 'Enable Discord scheduled events'
+      enable_bluesky:
+        type: boolean
+        default: false
+        description: 'Enable Bluesky posts'
+      enable_mailchimp:
+        type: boolean
+        default: false
+        description: 'Enable Mailchimp campaigns'
+      enable_meetup:
+        type: boolean
+        default: false
+        description: 'Enable Meetup events'
+      enable_luma:
+        type: boolean
+        default: false
+        description: 'Enable Luma events'
+
+      # Discord config
+      discord-server-id:
+        type: string
+        required: false
+        description: 'Discord server/guild ID'
+      discord-time-zone:
+        type: string
+        required: false
+        description: 'Event timezone (e.g., Europe/Nicosia)'
+
+      # Shared config
+      talks-repo:
+        type: string
+        required: false
+        description: 'Cross-repo talks repository (owner/repo)'
+
+    secrets:
+      # GitHub auth
+      GH_PAT:
+        required: false
+        description: 'GitHub Personal Access Token'
+      GH_APP_ID:
+        required: false
+        description: 'GitHub App ID'
+      GH_APP_PRIVATE_KEY:
+        required: false
+        description: 'GitHub App private key'
+      GH_APP_INSTALLATION_ID:
+        required: false
+        description: 'GitHub App installation ID'
+
+      # Provider secrets
+      BSKY_IDENTIFIER:
+        required: false
+        description: 'Bluesky handle or email'
+      BSKY_PASSWORD:
+        required: false
+        description: 'Bluesky password or app password'
+      MAILCHIMP_API_KEY:
+        required: false
+        description: 'Mailchimp API key'
+      MEETUP_EMAIL:
+        required: false
+        description: 'Meetup account email'
+      MEETUP_PASSWORD:
+        required: false
+        description: 'Meetup account password'
+      LUMA_EMAIL:
+        required: false
+        description: 'Luma account email'
+      LUMA_PASSWORD:
+        required: false
+        description: 'Luma account password'
+
+jobs:
+  broadcast:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout broadcast repo
+        uses: actions/checkout@v5
+        with:
+          repository: gitevents/broadcast
+          # Pin to this reusable workflow's own commit. Without a ref the
+          # default branch is checked out, so a caller pinning @v1 would get
+          # v1's YAML but main's dist/.
+          ref: ${{ github.job_workflow_sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Broadcast to enabled providers
+        id: broadcast
+        uses: actions/github-script@v7
+        env:
+          # Provider flags
+          ENABLE_DISCORD: ${{ inputs.enable_discord }}
+          ENABLE_BLUESKY: ${{ inputs.enable_bluesky }}
+          ENABLE_MAILCHIMP: ${{ inputs.enable_mailchimp }}
+          ENABLE_MEETUP: ${{ inputs.enable_meetup }}
+          ENABLE_LUMA: ${{ inputs.enable_luma }}
+
+          # Discord config
+          DISCORD_SERVER_ID: ${{ inputs.discord-server-id }}
+          DISCORD_TIME_ZONE: ${{ inputs.discord-time-zone }}
+
+          # Shared config
+          TALKS_REPO: ${{ inputs.talks-repo }}
+
+          # GitHub auth
+          GH_PAT: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          GH_APP_ID: ${{ secrets.GH_APP_ID }}
+          # @gitevents/fetch reads GH_PRIVATE_KEY (base64-encoded)
+          GH_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          GH_APP_INSTALLATION_ID: ${{ secrets.GH_APP_INSTALLATION_ID }}
+
+          # Provider secrets
+          BSKY_IDENTIFIER: ${{ secrets.BSKY_IDENTIFIER }}
+          BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
+          MAILCHIMP_API_KEY: ${{ secrets.MAILCHIMP_API_KEY }}
+          MEETUP_EMAIL: ${{ secrets.MEETUP_EMAIL }}
+          MEETUP_PASSWORD: ${{ secrets.MEETUP_PASSWORD }}
+          LUMA_EMAIL: ${{ secrets.LUMA_EMAIL }}
+          LUMA_PASSWORD: ${{ secrets.LUMA_PASSWORD }}
+        with:
+          script: |
+            // dist/ is an ES module bundle, so it is loaded with import().
+            // require() only works on Node 20.19+, and the runner's version is
+            // not guaranteed.
+            const { pathToFileURL } = require('node:url')
+            const { detectLifecycle, broadcastMulti } = await import(
+              pathToFileURL(`${process.env.GITHUB_WORKSPACE}/dist/index.js`).href
+            )
+
+            const lifecycle = detectLifecycle(context)
+            core.setOutput('lifecycle', lifecycle.type)
+
+            const results = await broadcastMulti(context, {
+              providers: {
+                discord: process.env.ENABLE_DISCORD === 'true',
+                bluesky: process.env.ENABLE_BLUESKY === 'true',
+                mailchimp: process.env.ENABLE_MAILCHIMP === 'true',
+                meetup: process.env.ENABLE_MEETUP === 'true',
+                luma: process.env.ENABLE_LUMA === 'true'
+              },
+              config: {
+                discordServerId: process.env.DISCORD_SERVER_ID,
+                discordTimeZone: process.env.DISCORD_TIME_ZONE,
+                talksRepo: process.env.TALKS_REPO,
+                bskyIdentifier: process.env.BSKY_IDENTIFIER,
+                bskyPassword: process.env.BSKY_PASSWORD,
+                mailchimpApiKey: process.env.MAILCHIMP_API_KEY,
+                meetupEmail: process.env.MEETUP_EMAIL,
+                meetupPassword: process.env.MEETUP_PASSWORD,
+                lumaEmail: process.env.LUMA_EMAIL,
+                lumaPassword: process.env.LUMA_PASSWORD
+              }
+            })
+
+            // Post individual status comments
+            for (const result of results) {
+              if (result.provider === 'all') {
+                // Skip "No action needed" message
+                continue
+              }
+
+              const emoji = result.success ? '✅' : '⚠️'
+              const message = result.success
+                ? `Event ${result.action} on ${result.provider}`
+                : `Skipped ${result.provider}: ${result.reason}`
+
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `${emoji} ${message}`
+              })
+            }
+
+            const broadcast = results.filter((r) => r.provider !== 'all')
+            core.setOutput(
+              'succeeded',
+              String(broadcast.some((r) => r.success))
+            )
+
+      - name: Add Event Created label
+        # Only stamp the label when this run actually created the event. Without
+        # the lifecycle gate a no-op run (or a cancel, or a run where every
+        # provider was skipped) marks the issue as created, and the create path
+        # then refuses to broadcast it ever again.
+        if: >-
+          success() &&
+          steps.broadcast.outputs.lifecycle == 'create' &&
+          steps.broadcast.outputs.succeeded == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.issue.labels.map(l => l.name)
+            if (!labels.includes('Event Created ✓')) {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['Event Created ✓']
+              })
+            }
