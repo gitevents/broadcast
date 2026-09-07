@@ -1,6 +1,9 @@
 import bodyParser from '@zentered/issue-forms-body-parser'
 import { zonedTimeToUtc } from 'date-fns-tz'
-import { format, add } from 'date-fns'
+import { format, add, parseISO } from 'date-fns'
+
+// Bluesky caps a post at 300 characters
+const BLUESKY_MAX_LENGTH = 300
 
 /**
  * Transform event data for Discord scheduled events API
@@ -14,10 +17,7 @@ export async function transformForDiscord(eventData, timezone) {
   const description = buildEventDescription(eventData, parsed)
 
   // Parse start time in the event's timezone
-  const startTime = zonedTimeToUtc(
-    `${parsed.date.date}T${parsed.time.time}`,
-    timezone
-  )
+  const startTime = resolveStartTime(parsed, timezone)
 
   // Calculate end time based on duration
   const endTime = calculateEndTime(parsed, timezone, startTime)
@@ -41,10 +41,11 @@ export async function transformForDiscord(eventData, timezone) {
  */
 export async function transformForBluesky(eventData) {
   const parsed = await bodyParser(eventData.body)
+  const { date, time } = requireDateAndTime(parsed)
 
   // Format as text post with talk list
   let text = `📅 ${eventData.title}\n`
-  text += `📆 ${formatDate(parsed.date.date)} at ${parsed.time.time}\n`
+  text += `📆 ${formatDate(date)} at ${time}\n`
   text += `📍 ${parsed.location?.text || 'TBD'}\n\n`
 
   if (eventData.talks && eventData.talks.length > 0) {
@@ -63,10 +64,19 @@ export async function transformForBluesky(eventData) {
     }
   }
 
-  text += `\n🔗 ${eventData.url}`
+  // The link is the point of the post, so reserve its length up front rather
+  // than appending it and letting the 300-char truncation cut it off.
+  const link = eventData.url ? `\n🔗 ${eventData.url}` : ''
+  const available = BLUESKY_MAX_LENGTH - link.length
+
+  if (text.length > available) {
+    text = `${text.slice(0, Math.max(0, available - 1)).trimEnd()}…`
+  }
+
+  text += link
 
   return {
-    text: text.slice(0, 300), // Bluesky limit
+    text,
     // Additional talks for potential threading
     talks: eventData.talks
       ? eventData.talks.map((talk) => ({
@@ -87,7 +97,9 @@ export async function transformForMailchimp(eventData) {
   // TODO: Implement Mailchimp HTML template format
   return {
     subject: eventData.title,
-    preheader: `Join us on ${formatDate(parsed.date.date)}`,
+    preheader: parsed?.date?.date
+      ? `Join us on ${formatDate(parsed.date.date)}`
+      : 'Join us',
     html: '<h1>Placeholder - Mailchimp integration not yet implemented</h1>',
     // Pass through for future implementation
     eventData,
@@ -107,8 +119,8 @@ export async function transformForMeetup(eventData) {
   return {
     title: eventData.title,
     description: parsed['event-description']?.text || '',
-    date: parsed.date.date,
-    time: parsed.time.time,
+    date: parsed?.date?.date || '',
+    time: parsed?.time?.time || '',
     location: parsed.location?.text || '',
     duration: parsed.duration?.text || '120', // Default 2 hours
     // Pass through for future implementation
@@ -129,8 +141,8 @@ export async function transformForLuma(eventData) {
   return {
     title: eventData.title,
     description: parsed['event-description']?.text || '',
-    date: parsed.date.date,
-    time: parsed.time.time,
+    date: parsed?.date?.date || '',
+    time: parsed?.time?.time || '',
     location: parsed.location?.text || '',
     // Pass through for future implementation
     eventData,
@@ -172,10 +184,58 @@ function calculateEndTime(parsed, timezone, startTime) {
 }
 
 /**
+ * Read the Date and Time fields, failing clearly when either is absent
+ * @param {Object} parsed - Parsed issue body
+ * @returns {{date: string, time: string}} Date and time strings
+ * @throws {Error} If either field is missing
+ */
+function requireDateAndTime(parsed) {
+  const date = parsed?.date?.date
+  const time = parsed?.time?.time
+
+  if (!date || !time) {
+    throw new Error(
+      'Event issue is missing a Date or Time field; both are required'
+    )
+  }
+
+  return { date, time }
+}
+
+/**
+ * Resolve the event start time in the event's timezone
+ * @param {Object} parsed - Parsed issue body
+ * @param {string} timezone - Event timezone
+ * @returns {Date} Start time
+ * @throws {Error} If the date or time is missing or unparseable
+ */
+function resolveStartTime(parsed, timezone) {
+  const { date, time } = requireDateAndTime(parsed)
+  const startTime = zonedTimeToUtc(`${date}T${time}`, timezone)
+
+  if (Number.isNaN(startTime.getTime())) {
+    throw new Error(
+      `Could not parse event start time from date "${date}" and time "${time}". Expected YYYY-MM-DD and HH:mm.`
+    )
+  }
+
+  return startTime
+}
+
+/**
  * Format date for display
  * @param {string} dateStr - ISO date string
  * @returns {string} Formatted date
+ * @throws {Error} If the date cannot be parsed
  */
 function formatDate(dateStr) {
-  return format(new Date(dateStr), 'MMM d, yyyy')
+  // parseISO reads "2026-02-01" as local midnight. new Date() would read it as
+  // UTC midnight, which formats as the previous day west of Greenwich.
+  const date = parseISO(dateStr)
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`Could not parse event date "${dateStr}"`)
+  }
+
+  return format(date, 'MMM d, yyyy')
 }

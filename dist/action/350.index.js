@@ -1,9 +1,20 @@
+export const id = 350;
+export const ids = [350];
+export const modules = {
+
+/***/ 20350:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   detectLifecycle: () => (/* binding */ detectLifecycle)
+/* harmony export */ });
+/* unused harmony exports storeProviderEventIds, extractProviderEventIds, getProviderEventId, setProviderEventId */
 /**
  * Detect the lifecycle action based on issue labels and event type
  * @param {Object} context - GitHub Actions context
  * @returns {Object} Lifecycle information with type and reason
  */
-export function detectLifecycle(context) {
+function detectLifecycle(context) {
   const labels = (context.payload.issue.labels || []).map((l) => l.name)
   const action = context.payload.action
   const isCancelled = labels.some((l) => l.toLowerCase().includes('cancelled'))
@@ -53,7 +64,7 @@ export function detectLifecycle(context) {
  * @param {Object} providerIds - Map of provider names to their event IDs
  * @returns {string} Updated issue body with provider IDs
  */
-export function storeProviderEventIds(issueBody, providerIds) {
+function storeProviderEventIds(issueBody, providerIds) {
   const marker = '<!-- provider-ids: '
   const json = JSON.stringify(providerIds)
   // The GitHub API returns null for an issue with an empty body
@@ -73,7 +84,7 @@ export function storeProviderEventIds(issueBody, providerIds) {
  * @param {string} issueBody - Issue body content
  * @returns {Object} Map of provider names to their event IDs
  */
-export function extractProviderEventIds(issueBody) {
+function extractProviderEventIds(issueBody) {
   // The GitHub API returns null for an issue with an empty body
   if (typeof issueBody !== 'string') {
     return {}
@@ -103,7 +114,7 @@ export function extractProviderEventIds(issueBody) {
  * @param {string} provider - Provider name (e.g., 'discord', 'meetup')
  * @returns {string|null} Provider event ID or null if not found
  */
-export function getProviderEventId(issueBody, provider) {
+function getProviderEventId(issueBody, provider) {
   const providerIds = extractProviderEventIds(issueBody)
   return providerIds[provider] || null
 }
@@ -115,8 +126,15 @@ export function getProviderEventId(issueBody, provider) {
  * @param {string} eventId - Provider's event ID
  * @returns {string} Updated issue body
  */
-export function setProviderEventId(issueBody, provider, eventId) {
+function setProviderEventId(issueBody, provider, eventId) {
   const providerIds = extractProviderEventIds(issueBody)
   providerIds[provider] = eventId
   return storeProviderEventIds(issueBody, providerIds)
 }
+
+
+/***/ })
+
+};
+
+//# sourceMappingURL=350.index.js.map

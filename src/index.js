@@ -25,17 +25,18 @@ export {
 // Provider base classes
 export { BaseProvider } from './providers/base-provider.js'
 export { ApiProvider } from './providers/api-provider.js'
-export {
-  FormProvider,
-  fillFieldWithFallback
-} from './providers/form-provider.js'
 
 // Provider implementations
 export { DiscordProvider } from './providers/discord.js'
 export { BlueskyProvider } from './providers/bluesky.js'
 export { MailchimpProvider } from './providers/mailchimp.js'
-export { MeetupProvider } from './providers/meetup.js'
-export { LumaProvider } from './providers/luma.js'
+
+// FormProvider, MeetupProvider and LumaProvider are intentionally not
+// re-exported here. They depend on playwright, and re-exporting them makes the
+// bundler pull a static `import "playwright"` into dist/index.js, which then
+// fails to load anywhere playwright is not installed. Import them directly
+// from './providers/form-provider.js', './providers/meetup.js' or
+// './providers/luma.js' once those providers are implemented.
 
 /**
  * Broadcast event to multiple providers

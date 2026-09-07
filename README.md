@@ -285,6 +285,9 @@ secrets:
   GH_APP_INSTALLATION_ID: ${{ secrets.GH_APP_INSTALLATION_ID }}
 ```
 
+`GH_APP_PRIVATE_KEY` must be base64-encoded PKCS8. The workflow passes it to
+`@gitevents/fetch` as `GH_PRIVATE_KEY`.
+
 ### Provider Authentication
 
 Each provider requires its own credentials. Store these as repository secrets:

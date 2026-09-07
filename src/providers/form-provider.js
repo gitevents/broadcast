@@ -1,4 +1,3 @@
-import { chromium } from 'playwright'
 import { writeFile, mkdir } from 'fs/promises'
 import { BaseProvider } from './base-provider.js'
 
@@ -12,14 +11,19 @@ export class FormProvider extends BaseProvider {
    * @returns {Promise<Object>} Result with eventId and url
    */
   async create() {
+    // Imported lazily: playwright is optional and only needed by form providers
+    const { chromium } = await import('playwright')
     const browser = await chromium.launch({
       headless: process.env.PLAYWRIGHT_HEADLESS !== 'false'
     })
+    let page
 
-    const context = await browser.newContext()
-    const page = await context.newPage()
-
+    // Everything after launch() runs inside the try so that a failure creating
+    // the context or page still reaches the finally and closes the browser.
     try {
+      const browserContext = await browser.newContext()
+      page = await browserContext.newPage()
+
       await this.authenticate(page)
       await this.navigateToCreateForm(page)
       await this.fillForm(page)
@@ -27,7 +31,9 @@ export class FormProvider extends BaseProvider {
       await this.verify(page, result)
       return result
     } catch (error) {
-      await this.captureDebugArtifacts(page, error)
+      if (page) {
+        await this.captureDebugArtifacts(page, error)
+      }
       throw error
     } finally {
       await browser.close()
@@ -40,21 +46,26 @@ export class FormProvider extends BaseProvider {
    * @returns {Promise<Object>} Result with updated eventId and url
    */
   async update(eventId) {
+    // Imported lazily: playwright is optional and only needed by form providers
+    const { chromium } = await import('playwright')
     const browser = await chromium.launch({
       headless: process.env.PLAYWRIGHT_HEADLESS !== 'false'
     })
-
-    const context = await browser.newContext()
-    const page = await context.newPage()
+    let page
 
     try {
+      const browserContext = await browser.newContext()
+      page = await browserContext.newPage()
+
       await this.authenticate(page)
       await this.navigateToEditForm(page, eventId)
       await this.fillForm(page)
       const result = await this.submitForm(page)
       return result
     } catch (error) {
-      await this.captureDebugArtifacts(page, error)
+      if (page) {
+        await this.captureDebugArtifacts(page, error)
+      }
       throw error
     } finally {
       await browser.close()

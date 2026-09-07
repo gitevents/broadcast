@@ -12,8 +12,12 @@ export async function fetchEventData(context, options = {}) {
   const { owner, repo } = context.repo
   const issueNumber = context.payload.issue.number
 
-  // Use @gitevents/fetch to get event details
-  const eventData = await event(owner, repo, issueNumber)
+  // @gitevents/fetch returns an array of events; a single issue yields one entry
+  const [eventData] = await event(owner, repo, issueNumber)
+
+  if (!eventData) {
+    throw new Error(`Event not found: ${owner}/${repo}#${issueNumber}`)
+  }
 
   // Handle cross-repo talks if configured
   if (options.talksRepo && eventData.talks && eventData.talks.length > 0) {
@@ -99,6 +103,12 @@ async function fetchTalkFromUrl(url, talksRepoPath) {
     }
   }
 
-  // Fetch the talk issue
-  return await event(owner, repo, parseInt(issueNumber, 10))
+  // @gitevents/fetch returns an array; a single issue yields one entry
+  const [talkData] = await event(owner, repo, parseInt(issueNumber, 10))
+
+  if (!talkData) {
+    throw new Error(`Talk not found: ${url}`)
+  }
+
+  return talkData
 }

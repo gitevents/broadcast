@@ -64,11 +64,11 @@
 - Social media formatting
 - Issue comments and labels
 
-**Placeholder Workflows:**
+**Placeholder Providers:**
 
-- mailchimp-event.yml
-- meetup-event.yml (with Playwright)
-- luma-event.yml (with Playwright)
+Mailchimp, Meetup and Luma have transformers and provider classes but no
+working dispatch yet. They are reached through `broadcast.yml`; there are no
+separate per-provider workflows for them.
 
 ### 4. Documentation & Examples
 
